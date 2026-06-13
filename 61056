@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends Information Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .page { display: none; }
+        .page.active { display: block; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- DYNAMIC DIALOG POP-UP MODAL BOX -->
+    <div id="universal-modal" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 transform transition-all">
+            <div id="modal-icon-container" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <!-- Icon dynamically inserted -->
+            </div>
+            <h3 id="modal-title" class="text-xl font-bold text-center text-gray-950 mb-2"></h3>
+            <div id="modal-body-content" class="text-gray-600 text-sm mb-6 space-y-2">
+                <!-- Message content dynamically inserted -->
+            </div>
+            <button onclick="closeUniversalModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md flex items-center justify-center space-x-2">
+                <span>Acknowledge & Continue</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Header Bar -->
+    <nav id="top-nav" class="no-print bg-emerald-700 text-white shadow-md px-4 py-3 justify-between items-center hidden">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-users-gear text-xl"></i>
+            <span class="font-bold text-sm md:text-lg tracking-tight">Friends Info Management</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span id="user-display-name" class="text-sm font-medium bg-emerald-800 px-3 py-1 rounded-full"></span>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded text-sm font-semibold transition-colors flex items-center space-x-1">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hidden Printable Area Container -->
+    <div id="print-area" class="hidden p-8 bg-white text-gray-900"></div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-6xl">
+
+        <!-- Access Login Section -->
+        <section id="page-login" class="page active max-w-md mx-auto mt-12 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="bg-emerald-700 p-6 text-center text-white">
+                <i class="fa-solid fa-shield-halved text-4xl mb-2"></i>
+                <h2 class="text-2xl font-bold">Portal Access</h2>
+                <p class="text-emerald-100 text-sm mt-1">Sign in to manage your information</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Email Address</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="email" id="login-email" required class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="name@example.com">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Secure Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="password" id="login-password" required class="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">
+                    Access Portal <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i>
+                </button>
+                <p class="text-center text-sm text-gray-500 mt-4">
+                    New member? <a href="#" onclick="navigateTo('page-register')" class="text-emerald-600 font-bold hover:underline">Register here</a>
+                </p>
+            </form>
+        </section>
+
+        <!-- Account Registration Section -->
+        <section id="page-register" class="page max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="bg-emerald-700 p-6 text-center text-white">
+                <i class="fa-solid fa-user-plus text-4xl mb-2"></i>
+                <h2 class="text-2xl font-bold">Create Account</h2>
+                <p class="text-emerald-100 text-sm mt-1">Join the group information portal</p>
+            </div>
+            <form id="main-registration-form" onsubmit="handleRegister(event)" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Full Name</label>
+                    <input type="text" id="reg-name" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Username</label>
+                    <input type="text" id="reg-username" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Phone Number</label>
+                    <input type="tel" id="reg-phone" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" placeholder="080...">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Bank Account Number</label>
+                    <input type="text" id="reg-bank" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g. 0123456789 - GTBank">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Date of Birth</label>
+                    <input type="date" id="reg-dob" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Gender</label>
+                    <select id="reg-gender" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Email Address</label>
+                    <input type="email" id="reg-email" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Password</label>
+                    <input type="password" id="reg-pass" required minlength="6" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Min 6 characters">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Profile Picture (Optional)</label>
+                    <input type="file" id="reg-pic" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Notes / About Me</label>
+                    <textarea id="reg-notes" rows="2" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div class="md:col-span-2 pt-2">
+                    <button type="submit" id="reg-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">
+                        Complete Registration
+                    </button>
+                    <p class="text-center text-sm text-gray-500 mt-3">
+                        Already registered? <a href="#" onclick="navigateTo('page-login')" class="text-emerald-600 font-bold hover:underline">Log In</a>
+                    </p>
+                </div>
+            </form>
+        </section>
+
+        <!-- User Dashboard Section -->
+        <section id="page-user-dashboard" class="page space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-wider opacity-80">Your Contribution Balance</p>
+                        <h3 id="user-bal" class="text-3xl font-bold mt-1">₦0.00</h3>
+                    </div>
+                    <i class="fa-solid fa-wallet text-4xl opacity-30"></i>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-wider text-gray-400 font-medium">Group Net Pool Balance</p>
+                        <h3 id="user-group-net" class="text-2xl font-bold text-gray-800 mt-1">₦0.00</h3>
+                    </div>
+                    <i class="fa-solid fa-scale-balanced text-4xl text-teal-600 opacity-40"></i>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-wider text-gray-400 font-medium">Total Group Payouts</p>
+                        <h3 id="user-group-out" class="text-2xl font-bold text-gray-800 mt-1">₦0.00</h3>
+                    </div>
+                    <i class="fa-solid fa-circle-arrow-down text-4xl text-red-500 opacity-40"></i>
+                </div>
+            </div>
+
+            <!-- Toggle Trigger Action Button for Contributions -->
+            <div class="flex justify-end no-print">
+                <button id="btn-toggle-donation" onclick="showDonationContainer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i> <span>Send Contribution Entry</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Profile Display Details Card -->
+                <div id="user-profile-card" class="md:col-span-1 bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col items-center text-center">
+                    <img id="user-avatar" src="" alt="Profile Image" class="w-28 h-28 rounded-full object-cover ring-4 ring-emerald-100 shadow-inner mb-4 bg-gray-100">
+                    <h4 id="user-profile-name" class="text-xl font-bold text-gray-800">---</h4>
+                    <p id="user-profile-username" class="text-sm text-emerald-600 font-medium">@---</p>
+                    <hr class="w-full my-4 border-gray-100">
+                    <div class="w-full text-left space-y-2 text-sm text-gray-600">
+                        <p><i class="fa-solid fa-phone w-5 text-emerald-600"></i> <span id="user-profile-phone">---</span></p>
+                        <p><i class="fa-solid fa-building-columns w-5 text-emerald-600"></i> <span id="user-profile-bank">---</span></p>
+                        <p><i class="fa-solid fa-cake-candles w-5 text-emerald-600"></i> <span id="user-profile-dob">---</span></p>
+                        <p><i class="fa-solid fa-venus-mars w-5 text-emerald-600"></i> <span id="user-profile-gender">---</span></p>
+                    </div>
+                    <button onclick="printUserProfileReport()" class="no-print mt-6 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-print"></i> <span>Print Profile Report</span>
+                    </button>
+                </div>
+
+                <!-- Contribution Container (Form appears here) -->
+                <div id="user-donation-container" class="no-print hidden md:col-span-2 bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i>
+                                <span>Submit Deposit Notification</span>
+                            </h3>
+                            <button onclick="hideDonationContainer()" class="text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i> Close Form</button>
+                        </div>
+                        <form onsubmit="submitTransaction(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-1">Amount (₦)</label>
+                                <input type="number" id="tx-amount" required min="1" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-lg" placeholder="5000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600 mb-1">Transaction Note</label>
+                                <input type="text" id="tx-note" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Monthly contribution payment">
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-md">
+                                Submit Contribution Entry
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Table Records Logs -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b">
+                    <h3 class="font-bold text-gray-700">Group & Personal Transaction Log</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-bold border-b">
+                                <th class="p-4">Timestamp</th>
+                                <th class="p-4">Type</th>
+                                <th class="p-4">Beneficiary/Sender</th>
+                                <th class="p-4">Amount</th>
+                                <th class="p-4">Note</th>
+                                <th class="p-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-tx-table" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Control Center Management Workspace Dashboard -->
+        <section id="page-admin-dashboard" class="page space-y-6">
+            
+            <!-- BEAUTIFUL TOP TRANSACTION ACTION PANEL FOR ADMIN -->
+            <div class="no-print bg-white p-4 rounded-xl shadow-md border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900 text-sm">Administrative Contribution Payout</h4>
+                        <p class="text-xs text-gray-500">Distribute collected pool money to a designated group member.</p>
+                    </div>
+                </div>
+                <button onclick="openAdminGlobalWithdrawalDialog()" class="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition flex items-center justify-center space-x-2 text-sm">
+                    <i class="fa-solid fa-building-columns"></i> <span>Process Group Payout</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-gray-400 font-bold">Total Members</p>
+                        <h3 id="adm-total-members" class="text-3xl font-extrabold text-gray-800 mt-1">0</h3>
+                    </div>
+                    <i class="fa-solid fa-users text-4xl text-blue-500 opacity-30"></i>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-gray-400 font-bold">Total Net Pool Balance</p>
+                        <h3 id="adm-net-bal" class="text-3xl font-extrabold text-emerald-600 mt-1">₦0</h3>
+                    </div>
+                    <i class="fa-solid fa-scale-balanced text-4xl text-emerald-500 opacity-30"></i>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-gray-400 font-bold">Total Disbursed Payouts</p>
+                        <h3 id="adm-total-with" class="text-3xl font-extrabold text-red-600 mt-1">₦0</h3>
+                    </div>
+                    <i class="fa-solid fa-arrow-trend-down text-4xl text-red-500 opacity-30"></i>
+                </div>
+            </div>
+
+            <!-- Pending Verification Queue -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-amber-50 border-b border-amber-100">
+                    <h3 class="font-bold text-amber-900 flex items-center space-x-2">
+                        <i class="fa-solid fa-bell-concierge mr-1"></i>
+                        <span>Pending Deposits Needing Verification</span>
+                    </h3>
+                </div>
+                <div id="adm-pending-container" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Members Registry System -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="font-bold text-gray-700">Registered System Members Registry</h3>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                            <input type="text" id="adm-search-input" oninput="renderAdminDashboard()" placeholder="Search members..." class="w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <button onclick="printAdminMembersRegistry()" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-emerald-700 transition shadow-sm whitespace-nowrap">
+                            <i class="fa-solid fa-print mr-1"></i> Print Registry
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-bold border-b">
+                                <th class="p-4">Member Profile</th>
+                                <th class="p-4">Personal Deposited</th>
+                                <th class="p-4">Contact Info</th>
+                                <th class="p-4">Account Specifics</th>
+                                <th class="p-4 text-center">Administrative Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adm-members-table" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="no-print bg-gray-100 border-t border-gray-200 py-4 text-center text-xs text-gray-500">
+        &copy; 2026 Friends Information Management Portal.
+    </footer>
+
+    <script>
+        // GLOBAL POOL DATA ENGINE
+        const DEFAULT_SEED_MEMBERS = [
+            { 
+                id: "admin_root", 
+                name: "Anas Mamudo", 
+                username: "anas_admin", 
+                email: "admin@app.com", 
+                password: "07050349", 
+                phone: "+2348012345678", 
+                bank: "0123456789 - Access Bank", 
+                dob: "1995-04-12", 
+                gender: "Male", 
+                notes: "Primary Root Administrator Platform Manager", 
+                role: "admin", 
+                avatar: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23047857'/><text x='50%25' y='55%25' font-size='35' fill='white' font-family='sans-serif' text-anchor='middle' font-weight='bold'>AM</text></svg>", 
+                deposit: 0
+            }
+        ];
+
+        let APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS'));
+        if (!APP_MEMBERS || APP_MEMBERS.length === 0) {
+            APP_MEMBERS = DEFAULT_SEED_MEMBERS;
+            localStorage.setItem('CORE_MEMBERS', JSON.stringify(APP_MEMBERS));
+        } else {
+            let rootAdmin = APP_MEMBERS.find(m => m.id === "admin_root");
+            if (rootAdmin) { rootAdmin.password = "07050349"; }
+        }
+
+        // Global Pool Level Outflows
+        let GLOBAL_POOL_WITHDRAWALS = parseFloat(localStorage.getItem('GLOBAL_POOL_WITHDRAWAL_BAL')) || 0;
+        let APP_TRANSACTIONS = JSON.parse(localStorage.getItem('CORE_TXS')) || [];
+        let CURRENT_SESSION_USER = null;
+
+        function commitDatabaseUpdate() {
+            localStorage.setItem('CORE_MEMBERS', JSON.stringify(APP_MEMBERS));
+            localStorage.setItem('CORE_TXS', JSON.stringify(APP_TRANSACTIONS));
+            localStorage.setItem('GLOBAL_POOL_WITHDRAWAL_BAL', GLOBAL_POOL_WITHDRAWALS.toString());
+        }
+
+        function triggerPopUpModal(title, messageHtml, type = "success") {
+            const container = document.getElementById('universal-modal');
+            const iconBox = document.getElementById('modal-icon-container');
+            const titleBox = document.getElementById('modal-title');
+            const bodyBox = document.getElementById('modal-body-content');
+
+            titleBox.innerText = title;
+            bodyBox.innerHTML = messageHtml;
+
+            if (type === "success") {
+                iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl bg-emerald-100 text-emerald-600";
+                iconBox.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+            } else if (type === "alert") {
+                iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl bg-amber-100 text-amber-600";
+                iconBox.innerHTML = `<i class="fa-solid fa-bell"></i>`;
+            } else {
+                iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl bg-blue-100 text-blue-600";
+                iconBox.innerHTML = `<i class="fa-solid fa-circle-info"></i>`;
+            }
+
+            container.classList.remove('hidden');
+        }
+
+        function closeUniversalModal() {
+            document.getElementById('universal-modal').classList.add('hidden');
+        }
+
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(pageId === 'page-login' || pageId === 'page-register') {
+                document.getElementById('top-nav').style.display = 'none';
+            } else {
+                document.getElementById('top-nav').style.display = 'flex';
+            }
+            window.scrollTo(0,0);
+        }
+
+        function showDonationContainer() {
+            document.getElementById('user-donation-container').classList.remove('hidden');
+            document.getElementById('user-profile-card').classList.add('hidden');
+        }
+
+        function hideDonationContainer() {
+            document.getElementById('user-donation-container').classList.add('hidden');
+            document.getElementById('user-profile-card').classList.remove('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const targetEmail = document.getElementById('login-email').value.trim().toLowerCase();
+            const targetPassword = document.getElementById('login-password').value;
+
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            const matchingProfile = APP_MEMBERS.find(user => user.email.toLowerCase() === targetEmail);
+
+            if (!matchingProfile) {
+                alert("Authentication Failed: Email address not found.");
+                return;
+            }
+
+            if (matchingProfile.password !== targetPassword) {
+                alert("Authentication Failed: Invalid password.");
+                return;
+            }
+
+            CURRENT_SESSION_USER = matchingProfile;
+            document.getElementById('user-display-name').innerText = `User: ${matchingProfile.name}`;
+
+            triggerPopUpModal(
+                "Access Granted!",
+                `<p class="text-center text-gray-700 font-medium">Welcome back, <strong>${matchingProfile.name}</strong>!</p>
+                 <p class="text-xs text-gray-400 text-center mt-1">Secure session established successfully.</p>`,
+                "success"
+            );
+
+            if (matchingProfile.role === 'admin') {
+                renderAdminDashboard();
+                navigateTo('page-admin-dashboard');
+            } else {
+                renderUserDashboard();
+                navigateTo('page-user-dashboard');
+            }
+            
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            
+            let emailValue = "", nameValue = "", usernameValue = "", passwordValue = "";
+            let phoneValue = "", bankValue = "", dobValue = "", genderValue = "Male", notesValue = "";
+
+            try {
+                emailValue = document.getElementById('reg-email').value.trim().toLowerCase();
+                nameValue = document.getElementById('reg-name').value.trim();
+                usernameValue = document.getElementById('reg-username').value.trim();
+                passwordValue = document.getElementById('reg-pass').value;
+                phoneValue = document.getElementById('reg-phone').value.trim();
+                bankValue = document.getElementById('reg-bank').value.trim();
+                dobValue = document.getElementById('reg-dob').value;
+                genderValue = document.getElementById('reg-gender').value;
+                notesValue = document.getElementById('reg-notes').value.trim();
+            } catch (err) {
+                console.error("Extraction error:", err);
+            }
+
+            if (APP_MEMBERS.some(u => u.email.toLowerCase() === emailValue)) {
+                alert("Registration Error: Email already exists.");
+                return;
+            }
+
+            const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%236b7280'/><text x='50%25' y='55%25' font-size='35' fill='white' font-family='sans-serif' text-anchor='middle'>U</text></svg>";
+
+            const finalizeAndSave = (avatarToSave) => {
+                const freshMemberRecord = {
+                    id: "usr_" + Date.now(),
+                    name: nameValue,
+                    username: usernameValue,
+                    email: emailValue,
+                    password: passwordValue,
+                    phone: phoneValue,
+                    bank: bankValue,
+                    dob: dobValue,
+                    gender: genderValue,
+                    notes: notesValue,
+                    role: "member",
+                    avatar: avatarToSave,
+                    deposit: 0,
+                    hasUnreadWithdrawal: false, 
+                    lastWithdrawalAmount: 0
+                };
+
+                APP_MEMBERS.push(freshMemberRecord);
+                localStorage.setItem('CORE_MEMBERS', JSON.stringify(APP_MEMBERS));
+                
+                const summaryHtml = `
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-left space-y-1.5 font-sans text-xs">
+                        <p class="text-gray-700"><strong>Full Name:</strong> ${nameValue}</p>
+                        <p class="text-gray-700"><strong>Username:</strong> @${usernameValue}</p>
+                        <p class="text-gray-700"><strong>Email:</strong> ${emailValue}</p>
+                        <p class="text-gray-700"><strong>Phone:</strong> ${phoneValue}</p>
+                        <p class="text-gray-700"><strong>Bank Details:</strong> ${bankValue}</p>
+                    </div>
+                `;
+                
+                triggerPopUpModal("Registration Records Saved", summaryHtml, "success");
+                document.getElementById('main-registration-form').reset();
+                navigateTo('page-login');
+            };
+
+            let fileInput = document.getElementById('reg-pic');
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) { finalizeAndSave(event.target.result); };
+                reader.onerror = function() { finalizeAndSave(defaultAvatar); };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                finalizeAndSave(defaultAvatar);
+            }
+        }
+
+        function logout() {
+            CURRENT_SESSION_USER = null;
+            navigateTo('page-login');
+        }
+
+        function renderUserDashboard() {
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            APP_TRANSACTIONS = JSON.parse(localStorage.getItem('CORE_TXS')) || [];
+            GLOBAL_POOL_WITHDRAWALS = parseFloat(localStorage.getItem('GLOBAL_POOL_WITHDRAWAL_BAL')) || 0;
+            
+            const u = APP_MEMBERS.find(m => m.id === CURRENT_SESSION_USER.id);
+            
+            // Calculate Global Net Stats
+            let nonAdminMembers = APP_MEMBERS.filter(m => m.role !== 'admin');
+            let totalInflows = nonAdminMembers.reduce((sum, m) => sum + (m.deposit || 0), 0);
+            let netPoolCapital = totalInflows - GLOBAL_POOL_WITHDRAWALS;
+
+            document.getElementById('user-bal').innerText = `₦${(u.deposit || 0).toLocaleString()}`;
+            document.getElementById('user-group-net').innerText = `₦${netPoolCapital.toLocaleString()}`;
+            document.getElementById('user-group-out').innerText = `₦${GLOBAL_POOL_WITHDRAWALS.toLocaleString()}`;
+
+            document.getElementById('user-avatar').src = u.avatar;
+            document.getElementById('user-profile-name').innerText = u.name;
+            document.getElementById('user-profile-username').innerText = `@${u.username}`;
+            document.getElementById('user-profile-phone').innerText = u.phone;
+            document.getElementById('user-profile-bank').innerText = u.bank;
+            document.getElementById('user-profile-dob').innerText = u.dob;
+            document.getElementById('user-profile-gender').innerText = u.gender;
+
+            // Payout Received Alert (If this specific member was given the rotation money)
+            if (u.hasUnreadWithdrawal) {
+                const alertHtml = `
+                    <div class="bg-emerald-50 p-4 border border-emerald-200 rounded-xl text-left text-xs space-y-2">
+                        <p class="text-emerald-800 font-bold">🎉 Alhamdulillah! An administrative payout rotation has been disbursed to your account.</p>
+                        <div class="border-t border-emerald-200/60 pt-2 space-y-1 text-gray-700">
+                            <p><strong>Beneficiary Name:</strong> ${u.name}</p>
+                            <p><strong>Bank Destination:</strong> ${u.bank}</p>
+                            <p><strong>Amount Transferred:</strong> <span class="text-emerald-700 font-bold">₦${u.lastWithdrawalAmount.toLocaleString()}</span></p>
+                            <p class="text-[11px] text-gray-500 mt-1">Note: This payout was funded directly from the collected pool contributions.</p>
+                        </div>
+                    </div>
+                `;
+                triggerPopUpModal("Group Contribution Payout Received", alertHtml, "success");
+                
+                u.hasUnreadWithdrawal = false;
+                commitDatabaseUpdate();
+            }
+
+            const tableBody = document.getElementById('user-tx-table');
+            tableBody.innerHTML = '';
+            
+            // Users see all group payouts + their own personal entries
+            const records = APP_TRANSACTIONS.filter(t => t.userId === u.id || t.type === "Group Payout");
+            if(records.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 italic">No transactions loaded.</td></tr>`;
+                return;
+            }
+
+            records.sort((a,b) => b.txId.localeCompare(a.txId)).forEach(t => {
+                let badge = "bg-amber-100 text-amber-800";
+                if(t.status === 'Approved') badge = "bg-emerald-100 text-emerald-800";
+                if(t.status === 'Rejected') badge = "bg-red-100 text-red-800";
+
+                let displayType = t.type;
+                let txColor = "text-gray-900";
+                if(t.type === "Group Payout") {
+                    displayType = "🎁 Disbursed Payout";
+                    txColor = "text-red-600";
+                }
+
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-mono text-xs text-gray-500">${t.timestamp}</td>
+                        <td class="p-4 text-xs font-bold text-gray-700">${displayType}</td>
+                        <td class="p-4 text-xs text-gray-600 font-medium">${t.userName}</td>
+                        <td class="p-4 font-extrabold ${txColor}">₦${t.amount.toLocaleString()}</td>
+                        <td class="p-4 text-gray-600">${t.note}</td>
+                        <td class="p-4 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${badge}">${t.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function submitTransaction(e) {
+            e.preventDefault();
+            const inputAmount = parseFloat(document.getElementById('tx-amount').value);
+            const inputNote = document.getElementById('tx-note').value.trim() || "Regular Contribution Settlement";
+
+            const transactionObject = {
+                txId: "tx_" + Date.now(),
+                userId: CURRENT_SESSION_USER.id,
+                userName: CURRENT_SESSION_USER.name,
+                amount: inputAmount,
+                type: "Deposit",
+                note: inputNote,
+                status: "Pending",
+                timestamp: new Date().toLocaleString()
+            };
+
+            APP_TRANSACTIONS.push(transactionObject);
+            commitDatabaseUpdate();
+            
+            hideDonationContainer();
+            renderUserDashboard();
+
+            triggerPopUpModal(
+                "Submission Complete", 
+                `<p class="text-center text-gray-600 text-xs">Hello <strong>${CURRENT_SESSION_USER.name}</strong>, your deposit entry of <span class="text-emerald-600 font-bold font-mono">₦${inputAmount.toLocaleString()}</span> has been dispatched to the admin dashboard log for prompt confirmation.</p>`,
+                "info"
+            );
+            
+            document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-note').value = '';
+        }
+
+        function printUserProfileReport() {
+            const u = APP_MEMBERS.find(m => m.id === CURRENT_SESSION_USER.id);
+            const targetArea = document.getElementById('print-area');
+
+            targetArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 40px; border: 2px solid #333;">
+                    <h1 style="text-align: center; color: #047857; margin-bottom: 5px;">MEMBER CONTRIBUTION STATEMENT</h1>
+                    <hr style="border: 1px solid #ddd; margin-bottom: 20px;" />
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <tr><td style="padding: 8px; font-weight: bold; width: 30%;">Full Name:</td><td style="padding: 8px;">${u.name}</td></tr>
+                        <tr><td style="padding: 8px; font-weight: bold;">Username:</td><td style="padding: 8px;">@${u.username}</td></tr>
+                        <tr><td style="padding: 8px; font-weight: bold;">Bank Account:</td><td style="padding: 8px;">${u.bank}</td></tr>
+                    </table>
+                    <div style="background-color: #f0fdf4; padding: 20px; border: 1px solid #bbf7d0; border-radius: 8px;">
+                        <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #047857;">Personal Total Contributed: ₦${(u.deposit || 0).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+            window.print();
+        }
+
+        function printAdminMembersRegistry() {
+            const targetArea = document.getElementById('print-area');
+            let rowsHtml = '';
+            
+            APP_MEMBERS.filter(m => m.role !== 'admin').forEach((m, idx) => {
+                rowsHtml += `
+                    <tr style="border-bottom: 1px solid #ddd; font-size: 12px;">
+                        <td style="padding: 10px; text-align: center;">${idx + 1}</td>
+                        <td style="padding: 10px; font-weight: bold;">${m.name}</td>
+                        <td style="padding: 10px; color: #047857;">₦${(m.deposit || 0).toLocaleString()}</td>
+                        <td style="padding: 10px;">${m.phone}</td>
+                        <td style="padding: 10px;">${m.bank}</td>
+                    </tr>
+                `;
+            });
+
+            targetArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2 style="color: #047857; text-align: center;">MEMBERS ROSTER ROSTER</h2>
+                    <table style="width: 100%; border-collapse: collapse;" border="1" cellpadding="8">
+                        <thead>
+                            <tr style="background-color: #f3f4f6;">
+                                <th>S/N</th><th>Name</th><th>Total Contributed</th><th>Phone</th><th>Bank Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+            `;
+            window.print();
+        }
+
+        function renderAdminDashboard() {
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            APP_TRANSACTIONS = JSON.parse(localStorage.getItem('CORE_TXS')) || [];
+            GLOBAL_POOL_WITHDRAWALS = parseFloat(localStorage.getItem('GLOBAL_POOL_WITHDRAWAL_BAL')) || 0;
+
+            let nonAdminMembers = APP_MEMBERS.filter(m => m.role !== 'admin');
+            let memberCount = nonAdminMembers.length;
+            
+            let totalInflows = nonAdminMembers.reduce((sum, m) => sum + (m.deposit || 0), 0);
+            let netPoolCapital = totalInflows - GLOBAL_POOL_WITHDRAWALS;
+
+            document.getElementById('adm-total-members').innerText = memberCount;
+            document.getElementById('adm-net-bal').innerText = `₦${netPoolCapital.toLocaleString()}`;
+            document.getElementById('adm-total-with').innerText = `₦${GLOBAL_POOL_WITHDRAWALS.toLocaleString()}`;
+
+            const pendingContainer = document.getElementById('adm-pending-container');
+            pendingContainer.innerHTML = '';
+            const pendingItems = APP_TRANSACTIONS.filter(t => t.status === "Pending");
+
+            if(pendingItems.length === 0) {
+                pendingContainer.className = "p-6 text-center text-gray-400 italic text-sm";
+                pendingContainer.innerHTML = "No pending validation confirmations.";
+            } else {
+                pendingContainer.className = "p-4 grid grid-cols-1 md:grid-cols-2 gap-4";
+                pendingItems.forEach(t => {
+                    pendingContainer.innerHTML += `
+                        <div class="bg-gray-50 border border-gray-200/60 rounded-xl p-4 flex flex-col justify-between shadow-sm">
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-gray-900">${t.userName}</h4>
+                                        <p class="text-[10px] font-mono text-gray-400">${t.timestamp}</p>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">₦${t.amount.toLocaleString()}</span>
+                                </div>
+                                <p class="text-xs text-gray-600">"${t.note}"</p>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-3 mt-3 border-t">
+                                <button onclick="executeTransactionResolution('${t.txId}', 'Reject')" class="bg-white text-gray-500 border px-2.5 py-1.5 rounded-lg text-xs hover:bg-red-50 hover:text-red-600 transition">Reject</button>
+                                <button onclick="executeTransactionResolution('${t.txId}', 'Approve')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-emerald-700 transition shadow-sm">Approve Entry</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const membersBody = document.getElementById('adm-members-table');
+            membersBody.innerHTML = '';
+            const query = document.getElementById('adm-search-input').value.toLowerCase().trim();
+
+            const filteredMembers = nonAdminMembers.filter(m => {
+                return m.name.toLowerCase().includes(query) || m.username.toLowerCase().includes(query);
+            });
+
+            if(filteredMembers.length === 0) {
+                membersBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">No members found.</td></tr>`;
+            } else {
+                filteredMembers.forEach(m => {
+                    membersBody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition text-xs">
+                            <td class="p-4 flex items-center space-x-3">
+                                <img src="${m.avatar}" class="w-10 h-10 rounded-full object-cover border">
+                                <div>
+                                    <p class="font-bold text-gray-900">${m.name}</p>
+                                    <p class="text-emerald-600 font-mono">@${m.username}</p>
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <p class="font-bold text-gray-800">Deposited: <span class="text-emerald-700">₦${(m.deposit || 0).toLocaleString()}</span></p>
+                            </td>
+                            <td class="p-4 text-gray-600">${m.phone}</td>
+                            <td class="p-4 text-gray-600 truncate max-w-[150px]">${m.bank}</td>
+                            <td class="p-4 text-center">
+                                <button onclick="executeAdminChangePassword('${m.id}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border flex items-center justify-center space-x-1 mx-auto transition shadow-sm">
+                                    <i class="fa-solid fa-key text-gray-500"></i> <span class="text-[11px] font-medium">Edit Pass</span>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function executeTransactionResolution(txId, action) {
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            APP_TRANSACTIONS = JSON.parse(localStorage.getItem('CORE_TXS')) || [];
+
+            const txIndex = APP_TRANSACTIONS.findIndex(t => t.txId === txId);
+            if (txIndex === -1) return;
+
+            const tx = APP_TRANSACTIONS[txIndex];
+            const targetUserIndex = APP_MEMBERS.findIndex(m => m.id === tx.userId);
+
+            if(action === 'Approve') {
+                tx.status = 'Approved';
+                if(targetUserIndex !== -1) {
+                    APP_MEMBERS[targetUserIndex].deposit = (APP_MEMBERS[targetUserIndex].deposit || 0) + tx.amount;
+                }
+            } else {
+                tx.status = 'Rejected';
+            }
+
+            commitDatabaseUpdate();
+            alert(`State recorded successfully: ${action}d.`);
+            renderAdminDashboard();
+        }
+
+        // --- UPDATED: WITHDRAW MONEY DIRECTLY FROM TOTAL NET POOL BALANCE ---
+        function openAdminGlobalWithdrawalDialog() {
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            GLOBAL_POOL_WITHDRAWALS = parseFloat(localStorage.getItem('GLOBAL_POOL_WITHDRAWAL_BAL')) || 0;
+            
+            let nonAdminMembers = APP_MEMBERS.filter(m => m.role !== 'admin');
+            if (nonAdminMembers.length === 0) {
+                alert("No members registered in the portal system database.");
+                return;
+            }
+
+            // Calculate the current Group Net Balance
+            let totalInflows = nonAdminMembers.reduce((sum, m) => sum + (m.deposit || 0), 0);
+            let netPoolCapital = totalInflows - GLOBAL_POOL_WITHDRAWALS;
+
+            let dropdownMenuText = "Select Rotation Recipient (Type the member number):\n\n";
+            nonAdminMembers.forEach((m, index) => {
+                dropdownMenuText += `${index + 1}. ${m.name}\n`;
+            });
+
+            const userSelectionInput = prompt(dropdownMenuText);
+            if (userSelectionInput === null) return;
+
+            const selectedIndex = parseInt(userSelectionInput) - 1;
+            if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= nonAdminMembers.length) {
+                alert("Invalid selection choice.");
+                return;
+            }
+
+            const targetedMember = nonAdminMembers[selectedIndex];
+
+            // Verification window displaying complete beneficiary account matrix
+            const completeInformationMessage = `ADMIN CONTROL CENTER: CONFIRM ROTATION RECIPIENT\n\n` +
+                                                 `Recipient Name: ${targetedMember.name}\n` +
+                                                 `Phone Number: ${targetedMember.phone}\n` +
+                                                 `-----------------------------------------\n` +
+                                                 `BANK DISBURSEMENT DETAILS: ${targetedMember.bank}\n` +
+                                                 `-----------------------------------------\n` +
+                                                 `Current Total Net Pool Capital: ₦${netPoolCapital.toLocaleString()}\n\n` +
+                                                 `Enter payout amount to withdraw from TOTAL NET POOL BALANCE (₦):`;
+
+            const payoutAmountInput = prompt(completeInformationMessage);
+            if (payoutAmountInput === null) return;
+
+            const finalWithdrawalAmount = parseFloat(payoutAmountInput);
+            if (isNaN(finalWithdrawalAmount) || finalWithdrawalAmount <= 0 || finalWithdrawalAmount > netPoolCapital) {
+                alert("Operation Aborted: Amount must be valid and cannot exceed Total Net Pool Balance.");
+                return;
+            }
+
+            // DEDUCTION APPLIED DIRECTLY FROM THE TOTAL GLOBAL POOL NET SUM
+            GLOBAL_POOL_WITHDRAWALS += finalWithdrawalAmount;
+
+            // Mark flag for recipient alert visibility logs
+            const targetIndexInMasterDatabase = APP_MEMBERS.findIndex(m => m.id === targetedMember.id);
+            if (targetIndexInMasterDatabase !== -1) {
+                APP_MEMBERS[targetIndexInMasterDatabase].hasUnreadWithdrawal = true;
+                APP_MEMBERS[targetIndexInMasterDatabase].lastWithdrawalAmount = finalWithdrawalAmount;
+            }
+
+            // Log entry into the unified timeline tracker ledger as Group Payout
+            const systemPayoutLog = {
+                txId: "tx_" + Date.now(),
+                userId: targetedMember.id,
+                userName: targetedMember.name, // Log who received it
+                amount: finalWithdrawalAmount,
+                type: "Group Payout",
+                note: `Contribution rotation payout disbursed to ${targetedMember.name}`,
+                status: "Approved", 
+                timestamp: new Date().toLocaleString()
+            };
+
+            APP_TRANSACTIONS.push(systemPayoutLog);
+            commitDatabaseUpdate();
+
+            alert(`Payout Successful!\n₦${finalWithdrawalAmount.toLocaleString()} removed from Net Pool & recorded to ${targetedMember.name}.`);
+            renderAdminDashboard();
+        }
+
+        function executeAdminChangePassword(userId) {
+            APP_MEMBERS = JSON.parse(localStorage.getItem('CORE_MEMBERS')) || DEFAULT_SEED_MEMBERS;
+            const targetUserIndex = APP_MEMBERS.findIndex(m => m.id === userId);
+            if (targetUserIndex === -1) return;
+
+            const user = APP_MEMBERS[targetUserIndex];
+            const newPassword = prompt(`Enter new password for ${user.name}:`);
+            
+            if (newPassword === null || newPassword.trim().length < 6) {
+                alert("Invalid configuration change. Password must be at least 6 characters.");
+                return;
+            }
+
+            APP_MEMBERS[targetUserIndex].password = newPassword.trim();
+            commitDatabaseUpdate();
+            alert("Security password overwritten successfully.");
+            renderAdminDashboard();
+        }
+    </script>
+</body>
+</html>
